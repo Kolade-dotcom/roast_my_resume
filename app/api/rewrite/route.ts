@@ -1,12 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server';
-import Anthropic from '@anthropic-ai/sdk';
+import { GoogleGenerativeAI } from '@google/generative-ai';
 import { createRewritePrompt } from '@/lib/prompts';
 import { stripe } from '@/lib/stripe';
 import { RewriteResult } from '@/types';
 
-const anthropic = new Anthropic({
-  apiKey: process.env.ANTHROPIC_API_KEY,
-});
+const genAI = new GoogleGenerativeAI(process.env.GOOGLE_AI_API_KEY || '');
 
 export async function GET(request: NextRequest) {
   try {
@@ -46,29 +44,21 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    // Generate the rewrite using Claude
-    const message = await anthropic.messages.create({
-      model: 'claude-sonnet-4-20250514',
-      max_tokens: 3000,
-      messages: [
-        {
-          role: 'user',
-          content: createRewritePrompt(resumeText),
-        },
-      ],
-    });
-
-    const responseText = message.content[0].type === 'text' ? message.content[0].text : '';
+    // Generate the rewrite using Gemini
+    const model = genAI.getGenerativeModel({ model: 'gemini-2.5-pro' });
+    const geminiResult = await model.generateContent(createRewritePrompt(resumeText));
+    const geminiResponse = geminiResult.response;
+    const responseText = geminiResponse.text();
 
     // Try to parse JSON response
-    let result: RewriteResult;
+    let rewriteResult: RewriteResult;
     try {
       const jsonMatch = responseText.match(/\{[\s\S]*\}/);
       if (jsonMatch) {
-        result = JSON.parse(jsonMatch[0]);
+        rewriteResult = JSON.parse(jsonMatch[0]);
       } else {
         // Fallback if not JSON formatted
-        result = {
+        rewriteResult = {
           rewrittenResume: responseText,
           beforeAfterExamples: [
             'Before: Generic buzzwords → After: Specific achievements with metrics',
@@ -87,7 +77,7 @@ export async function GET(request: NextRequest) {
       }
     } catch (parseError) {
       console.error('Failed to parse JSON response:', parseError);
-      result = {
+      rewriteResult = {
         rewrittenResume: responseText,
         beforeAfterExamples: [
           'Before: Generic buzzwords → After: Specific achievements with metrics',
@@ -104,7 +94,7 @@ export async function GET(request: NextRequest) {
       };
     }
 
-    return NextResponse.json(result);
+    return NextResponse.json(rewriteResult);
   } catch (error) {
     console.error('Rewrite API error:', error);
     return NextResponse.json(

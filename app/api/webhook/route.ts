@@ -1,12 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { stripe } from '@/lib/stripe';
-import Anthropic from '@anthropic-ai/sdk';
+import { GoogleGenerativeAI } from '@google/generative-ai';
 import { createRewritePrompt } from '@/lib/prompts';
 import Stripe from 'stripe';
 
-const anthropic = new Anthropic({
-  apiKey: process.env.ANTHROPIC_API_KEY,
-});
+const genAI = new GoogleGenerativeAI(process.env.GOOGLE_AI_API_KEY || '');
 
 export async function POST(request: NextRequest) {
   const body = await request.text();
@@ -48,18 +46,16 @@ export async function POST(request: NextRequest) {
 
     if (resumeText) {
       try {
-        const message = await anthropic.messages.create({
-          model: 'claude-sonnet-4-20250514',
-          max_tokens: 3000,
-          messages: [
-            {
-              role: 'user',
-              content: createRewritePrompt(resumeText),
-            },
-          ],
+        const model = genAI.getGenerativeModel({ 
+          model: 'gemini-2.5-pro',
+          generationConfig: {
+            temperature: 0.7,
+            maxOutputTokens: 3000,
+          }
         });
-
-        const rewriteText = message.content[0].type === 'text' ? message.content[0].text : '';
+        const result = await model.generateContent(createRewritePrompt(resumeText));
+        const response = result.response;
+        const rewriteText = response.text();
         
         // For MVP: Log the result (in production, store in database or send via email)
         console.log('Rewrite generated for session:', session.id);

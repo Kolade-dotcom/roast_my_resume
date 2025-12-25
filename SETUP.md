@@ -10,12 +10,11 @@ npm install
 
 ## 2. Get Your API Keys
 
-### Anthropic API Key
-1. Go to [https://console.anthropic.com/](https://console.anthropic.com/)
-2. Sign up or log in
-3. Navigate to API Keys
-4. Create a new API key
-5. Copy the key (starts with `sk-ant-`)
+### Google AI API Key
+1. Go to [https://aistudio.google.com/apikey](https://aistudio.google.com/apikey)
+2. Sign in with your Google account
+3. Click "Create API Key"
+4. Copy the key (starts with `AIza`)
 
 ### Stripe API Keys
 1. Go to [https://dashboard.stripe.com/register](https://dashboard.stripe.com/register)
@@ -51,7 +50,7 @@ npm install
 
 2. Edit `.env.local` and add your keys:
    ```env
-   ANTHROPIC_API_KEY=sk-ant-your_key_here
+   GOOGLE_AI_API_KEY=AIza_your_key_here
    STRIPE_SECRET_KEY=sk_test_your_key_here
    STRIPE_WEBHOOK_SECRET=whsec_your_secret_here
    NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY=pk_test_your_key_here

@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useRef, DragEvent, ChangeEvent } from 'react';
+import { toast } from 'sonner';
 import { Upload, FileText, Zap } from 'lucide-react';
 
 interface UploadZoneProps {
@@ -48,7 +49,7 @@ export default function UploadZone({ onSubmit, isLoading }: UploadZoneProps) {
 
   const handlePasteSubmit = () => {
     if (pastedText.trim().length < 10) {
-      alert('Please paste at least 10 characters of resume text');
+      toast.error('Please paste at least 10 characters of resume text');
       return;
     }
     onSubmit(pastedText);
@@ -76,7 +77,7 @@ Bachelor's Degree in Computer Science`;
       <div className="flex gap-2 mb-4">
         <button
           onClick={() => setActiveTab('paste')}
-          className={`flex-1 py-3 px-4 rounded-lg font-medium transition-all ${
+          className={`flex-1 py-3 px-4 rounded-lg font-medium transition-all cursor-pointer ${
             activeTab === 'paste'
               ? 'bg-[#1A1A1A] text-white border border-[#2A2A2A]'
               : 'text-[#666666] hover:text-[#A1A1A1]'
@@ -87,7 +88,7 @@ Bachelor's Degree in Computer Science`;
         </button>
         <button
           onClick={() => setActiveTab('upload')}
-          className={`flex-1 py-3 px-4 rounded-lg font-medium transition-all ${
+          className={`flex-1 py-3 px-4 rounded-lg font-medium transition-all cursor-pointer ${
             activeTab === 'upload'
               ? 'bg-[#1A1A1A] text-white border border-[#2A2A2A]'
               : 'text-[#666666] hover:text-[#A1A1A1]'
@@ -111,7 +112,7 @@ Bachelor's Degree in Computer Science`;
               <div className="absolute bottom-6 left-6 right-6">
                 <button
                   onClick={() => setPastedText(sampleResume)}
-                  className="text-[#FF3B30] hover:text-[#FF4D42] font-medium text-sm underline"
+                  className="text-[#FF3B30] hover:text-[#FF4D42] font-medium text-sm underline cursor-pointer"
                 >
                   → Use sample resume
                 </button>
@@ -122,7 +123,7 @@ Bachelor's Degree in Computer Science`;
           <button
             onClick={handlePasteSubmit}
             disabled={isLoading || pastedText.trim().length < 10}
-            className="w-full bg-[#FF3B30] hover:bg-[#FF4D42] text-white px-6 py-4 rounded-xl font-semibold transition-all duration-200 disabled:bg-[#2A2A2A] disabled:text-[#666666] disabled:cursor-not-allowed flex items-center justify-center gap-2"
+            className="w-full bg-[#FF3B30] hover:bg-[#FF4D42] text-white px-6 py-4 rounded-xl font-semibold transition-all duration-200 disabled:bg-[#2A2A2A] disabled:text-[#666666] disabled:cursor-not-allowed cursor-pointer flex items-center justify-center gap-2"
           >
             {isLoading ? (
               <span className="flex items-center justify-center gap-2">

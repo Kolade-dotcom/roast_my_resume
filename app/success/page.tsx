@@ -1,11 +1,12 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, Suspense } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
+import { toast } from 'sonner';
 import RewriteDisplay from '@/components/RewriteDisplay';
 import { RewriteResult } from '@/types';
 
-export default function SuccessPage() {
+function SuccessPageContent() {
   const [rewriteResult, setRewriteResult] = useState<RewriteResult | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState('');
@@ -24,14 +25,17 @@ export default function SuccessPage() {
         const response = await fetch(`/api/rewrite?session_id=${sessionId}`);
         
         if (!response.ok) {
-          throw new Error('Failed to fetch rewrite');
+          const errorData = await response.json();
+          throw new Error(errorData.error || 'Failed to fetch rewrite');
         }
 
         const data = await response.json();
         setRewriteResult(data);
       } catch (err) {
         console.error('Error fetching rewrite:', err);
-        setError('Failed to load your rewrite. Please contact support with your session ID.');
+        const errorMessage = err instanceof Error ? err.message : 'Failed to load your rewrite. Please contact support with your session ID.';
+        setError(errorMessage);
+        toast.error(errorMessage);
       } finally {
         setIsLoading(false);
       }
@@ -61,7 +65,7 @@ export default function SuccessPage() {
           <p className="text-gray-600 mb-6">{error}</p>
           <button
             onClick={() => router.push('/')}
-            className="bg-purple-600 text-white px-6 py-3 rounded-lg font-semibold hover:bg-purple-700"
+            className="bg-purple-600 text-white px-6 py-3 rounded-lg font-semibold hover:bg-purple-700 cursor-pointer"
           >
             Back to Home
           </button>
@@ -81,5 +85,20 @@ export default function SuccessPage() {
         )}
       </div>
     </div>
+  );
+}
+
+export default function SuccessPage() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen bg-gradient-to-b from-purple-50 to-white flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin w-16 h-16 border-4 border-purple-600 border-t-transparent rounded-full mx-auto mb-6"></div>
+          <h2 className="text-2xl font-bold text-gray-900 mb-2">Loading...</h2>
+        </div>
+      </div>
+    }>
+      <SuccessPageContent />
+    </Suspense>
   );
 }
