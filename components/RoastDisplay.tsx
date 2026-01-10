@@ -1,7 +1,7 @@
 'use client';
 
-import { useRef } from 'react';
-import { Flame, Zap, Target, TrendingUp, Download, Check } from 'lucide-react';
+import { useRef, useState } from 'react';
+import { Flame, Zap, Target, TrendingUp, Download, Check, ChevronDown, ChevronUp } from 'lucide-react';
 import ReactMarkdown from 'react-markdown';
 import { toPng } from 'html-to-image';
 import { toast } from 'sonner';
@@ -12,17 +12,28 @@ interface RoastDisplayProps {
 
 export default function RoastDisplay({ roast }: RoastDisplayProps) {
   const roastCardRef = useRef<HTMLDivElement>(null);
+  const [isExpanded, setIsExpanded] = useState(false);
 
   const handleDownloadImage = async () => {
     if (!roastCardRef.current) return;
 
     const downloadToast = toast.loading('📸 Generating image...');
     try {
+      // Temporarily expand content for full capture
+      const wasExpanded = isExpanded;
+      setIsExpanded(true);
+      
+      // Wait for state update
+      await new Promise(resolve => setTimeout(resolve, 100));
+      
       const dataUrl = await toPng(roastCardRef.current, {
         quality: 1,
         pixelRatio: 2,
         backgroundColor: '#0F0F0F',
       });
+
+      // Restore previous state
+      setIsExpanded(wasExpanded);
 
       const link = document.createElement('a');
       link.download = 'my-resume-roast.png';
@@ -37,43 +48,62 @@ export default function RoastDisplay({ roast }: RoastDisplayProps) {
   };
 
   return (
-    <div className="w-full max-w-5xl mx-auto space-y-6">
+    <div className="w-full max-w-5xl mx-auto space-y-4 md:space-y-6">
       {/* Main Roast Card */}
       <div ref={roastCardRef} className="bg-[#1A1A1A] border border-[#2A2A2A] rounded-xl md:rounded-2xl p-4 sm:p-6 md:p-12 relative">
         
-        <div className="mb-6 md:mb-8 text-center">
-          <div className="inline-flex items-center gap-2 bg-[#FF3B30]/10 border border-[#FF3B30]/30 text-[#FF3B30] px-3 py-1.5 md:px-4 md:py-2 rounded-lg text-xs md:text-sm font-bold mb-4 md:mb-6 uppercase tracking-wider">
+        <div className="mb-4 md:mb-8 text-center">
+          <div className="inline-flex items-center gap-2 bg-[#FF3B30]/10 border border-[#FF3B30]/30 text-[#FF3B30] px-3 py-1.5 md:px-4 md:py-2 rounded-lg text-xs md:text-sm font-bold mb-3 md:mb-6 uppercase tracking-wider">
             <Flame className="w-3 h-3 md:w-4 md:h-4" />
             Roasted
           </div>
-          <h2 className="text-2xl sm:text-3xl md:text-5xl font-black text-white mb-2 md:mb-3 tracking-tight">
+          <h2 className="text-xl sm:text-3xl md:text-5xl font-black text-white mb-1 md:mb-3 tracking-tight">
             The Verdict
           </h2>
-          <p className="text-[#666666] text-sm md:text-lg">The truth hurts, but it helps</p>
+          <p className="text-[#666666] text-xs md:text-lg">The truth hurts, but it helps</p>
         </div>
         
-        <div className="bg-[#0F0F0F] rounded-lg md:rounded-xl p-4 sm:p-6 md:p-8 border border-[#2A2A2A] markdown-content">
+        {/* Scrollable content area on mobile */}
+        <div className={`bg-[#0F0F0F] rounded-lg md:rounded-xl p-3 sm:p-6 md:p-8 border border-[#2A2A2A] markdown-content ${!isExpanded ? 'max-h-[60vh] md:max-h-none overflow-y-auto' : ''}`}>
           <ReactMarkdown
             components={{
-              h1: ({ children }) => <h1 className="text-xl sm:text-2xl md:text-3xl font-black text-white mb-3 md:mb-4 mt-4 md:mt-6">{children}</h1>,
-              h2: ({ children }) => <h2 className="text-lg sm:text-xl md:text-2xl font-bold text-white mb-2 md:mb-3 mt-4 md:mt-5">{children}</h2>,
-              h3: ({ children }) => <h3 className="text-base sm:text-lg md:text-xl font-bold text-[#FF3B30] mb-2 mt-3 md:mt-4">{children}</h3>,
-              p: ({ children }) => <p className="text-[#A1A1A1] leading-relaxed text-sm sm:text-base md:text-lg mb-3 md:mb-4">{children}</p>,
+              h1: ({ children }) => <h1 className="text-lg sm:text-2xl md:text-3xl font-black text-white mb-2 md:mb-4 mt-3 md:mt-6">{children}</h1>,
+              h2: ({ children }) => <h2 className="text-base sm:text-xl md:text-2xl font-bold text-white mb-2 md:mb-3 mt-3 md:mt-5">{children}</h2>,
+              h3: ({ children }) => <h3 className="text-sm sm:text-lg md:text-xl font-bold text-[#FF3B30] mb-1.5 mt-2 md:mt-4">{children}</h3>,
+              p: ({ children }) => <p className="text-[#A1A1A1] leading-relaxed text-xs sm:text-base md:text-lg mb-2 md:mb-4">{children}</p>,
               strong: ({ children }) => <strong className="text-white font-bold">{children}</strong>,
               em: ({ children }) => <em className="text-[#FF9500] italic">{children}</em>,
-              ul: ({ children }) => <ul className="list-none space-y-1.5 md:space-y-2 mb-3 md:mb-4 ml-2 md:ml-4">{children}</ul>,
-              ol: ({ children }) => <ol className="list-decimal space-y-1.5 md:space-y-2 mb-3 md:mb-4 ml-4 md:ml-6 text-[#A1A1A1]">{children}</ol>,
-              li: ({ children }) => <li className="text-[#A1A1A1] leading-relaxed text-sm sm:text-base md:text-base">{children}</li>,
-              code: ({ children }) => <code className="bg-[#1A1A1A] text-[#FF3B30] px-1.5 py-0.5 md:px-2 md:py-1 rounded text-xs md:text-sm font-mono">{children}</code>,
-              blockquote: ({ children }) => <blockquote className="border-l-2 md:border-l-4 border-[#FF3B30] pl-3 md:pl-4 italic text-[#666666] my-3 md:my-4 text-sm md:text-base">{children}</blockquote>,
+              ul: ({ children }) => <ul className="list-none space-y-1 md:space-y-2 mb-2 md:mb-4 ml-1 md:ml-4">{children}</ul>,
+              ol: ({ children }) => <ol className="list-decimal space-y-1 md:space-y-2 mb-2 md:mb-4 ml-3 md:ml-6 text-[#A1A1A1]">{children}</ol>,
+              li: ({ children }) => <li className="text-[#A1A1A1] leading-relaxed text-xs sm:text-base">{children}</li>,
+              code: ({ children }) => <code className="bg-[#1A1A1A] text-[#FF3B30] px-1 py-0.5 md:px-2 md:py-1 rounded text-xs md:text-sm font-mono break-all">{children}</code>,
+              blockquote: ({ children }) => <blockquote className="border-l-2 md:border-l-4 border-[#FF3B30] pl-2 md:pl-4 italic text-[#666666] my-2 md:my-4 text-xs md:text-base">{children}</blockquote>,
             }}
           >
             {roast}
           </ReactMarkdown>
         </div>
+
+        {/* Expand/Collapse button - mobile only */}
+        <button
+          onClick={() => setIsExpanded(!isExpanded)}
+          className="md:hidden w-full mt-3 py-2 flex items-center justify-center gap-2 text-[#A1A1A1] hover:text-white text-xs font-medium transition-colors"
+        >
+          {isExpanded ? (
+            <>
+              <ChevronUp className="w-4 h-4" />
+              Show less
+            </>
+          ) : (
+            <>
+              <ChevronDown className="w-4 h-4" />
+              Expand full roast
+            </>
+          )}
+        </button>
         
         {/* Bottom watermark for sharing */}
-        <div className="mt-6 pt-4 border-t border-[#2A2A2A] text-center">
+        <div className="mt-4 md:mt-6 pt-3 md:pt-4 border-t border-[#2A2A2A] text-center">
           <p className="text-[#666666] text-xs md:text-sm">
             Get your resume roasted at <span className="text-[#FF3B30] font-bold">RoastMyResume.com</span> 🔥
           </p>
@@ -91,61 +121,57 @@ export default function RoastDisplay({ roast }: RoastDisplayProps) {
         </button>
       </div>
 
-      {/* Premium Upgrade Card */}
-      <div className="bg-[#1A1A1A] border-2 border-[#FF3B30] rounded-xl md:rounded-2xl p-6 sm:p-8 md:p-12 relative">
-        <div className="absolute -top-3 right-6 bg-[#FF9500] text-[#0F0F0F] px-3 py-1 rounded-full text-xs font-bold uppercase">
+      {/* Premium Upgrade Card - Compact on mobile */}
+      <div className="bg-[#1A1A1A] border-2 border-[#FF3B30] rounded-xl md:rounded-2xl p-4 sm:p-6 md:p-12 relative">
+        <div className="absolute -top-3 right-4 md:right-6 bg-[#FF9500] text-[#0F0F0F] px-2 md:px-3 py-1 rounded-full text-[10px] md:text-xs font-bold uppercase">
           Coming Soon
         </div>
         
-        <div className="text-center mb-6 md:mb-8">
-          <Flame className="w-10 h-10 md:w-12 md:h-12 text-[#FF3B30] mx-auto mb-4" />
-          <h3 className="text-2xl sm:text-3xl md:text-4xl font-black text-white mb-2 md:mb-3 tracking-tight">
+        <div className="text-center mb-4 md:mb-8">
+          <Flame className="w-8 h-8 md:w-12 md:h-12 text-[#FF3B30] mx-auto mb-2 md:mb-4" />
+          <h3 className="text-xl sm:text-2xl md:text-4xl font-black text-white mb-1 md:mb-3 tracking-tight">
             Get the Complete Package
           </h3>
-          <p className="text-[#A1A1A1] text-sm sm:text-base md:text-lg max-w-2xl mx-auto">
-            Everything you need to land your next job - templates, formats, and optimization
+          <p className="text-[#A1A1A1] text-xs sm:text-sm md:text-lg max-w-2xl mx-auto">
+            Everything you need to land your next job
           </p>
         </div>
 
-        {/* Features Grid */}
-        <div className="grid sm:grid-cols-2 md:grid-cols-4 gap-3 md:gap-4 mb-6 md:mb-8">
-          <div className="bg-[#0F0F0F] border border-[#2A2A2A] rounded-lg md:rounded-xl p-4 md:p-6 text-center">
-            <div className="w-10 h-10 md:w-12 md:h-12 bg-[#FF3B30]/10 rounded-lg flex items-center justify-center mx-auto mb-3 md:mb-4">
-              <Zap className="w-5 h-5 md:w-6 md:h-6 text-[#FF3B30]" />
+        {/* Features Grid - 2x2 on mobile */}
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-2 md:gap-4 mb-4 md:mb-8">
+          <div className="bg-[#0F0F0F] border border-[#2A2A2A] rounded-lg p-3 md:p-6 text-center">
+            <div className="w-8 h-8 md:w-12 md:h-12 bg-[#FF3B30]/10 rounded-lg flex items-center justify-center mx-auto mb-2 md:mb-4">
+              <Zap className="w-4 h-4 md:w-6 md:h-6 text-[#FF3B30]" />
             </div>
-            <h4 className="text-white font-bold text-sm md:text-base mb-1 md:mb-2">AI Rewrite</h4>
-            <p className="text-[#666666] text-xs md:text-sm">Professional overhaul</p>
+            <h4 className="text-white font-bold text-xs md:text-base">AI Rewrite</h4>
           </div>
 
-          <div className="bg-[#0F0F0F] border border-[#2A2A2A] rounded-lg md:rounded-xl p-4 md:p-6 text-center">
-            <div className="w-10 h-10 md:w-12 md:h-12 bg-[#FF3B30]/10 rounded-lg flex items-center justify-center mx-auto mb-3 md:mb-4">
-              <Target className="w-5 h-5 md:w-6 md:h-6 text-[#FF3B30]" />
+          <div className="bg-[#0F0F0F] border border-[#2A2A2A] rounded-lg p-3 md:p-6 text-center">
+            <div className="w-8 h-8 md:w-12 md:h-12 bg-[#FF3B30]/10 rounded-lg flex items-center justify-center mx-auto mb-2 md:mb-4">
+              <Target className="w-4 h-4 md:w-6 md:h-6 text-[#FF3B30]" />
             </div>
-            <h4 className="text-white font-bold text-sm md:text-base mb-1 md:mb-2">3 Templates</h4>
-            <p className="text-[#666666] text-xs md:text-sm">Choose your style</p>
+            <h4 className="text-white font-bold text-xs md:text-base">3 Templates</h4>
           </div>
 
-          <div className="bg-[#0F0F0F] border border-[#2A2A2A] rounded-lg md:rounded-xl p-4 md:p-6 text-center">
-            <div className="w-10 h-10 md:w-12 md:h-12 bg-[#FF3B30]/10 rounded-lg flex items-center justify-center mx-auto mb-3 md:mb-4">
-              <TrendingUp className="w-5 h-5 md:w-6 md:h-6 text-[#FF3B30]" />
+          <div className="bg-[#0F0F0F] border border-[#2A2A2A] rounded-lg p-3 md:p-6 text-center">
+            <div className="w-8 h-8 md:w-12 md:h-12 bg-[#FF3B30]/10 rounded-lg flex items-center justify-center mx-auto mb-2 md:mb-4">
+              <TrendingUp className="w-4 h-4 md:w-6 md:h-6 text-[#FF3B30]" />
             </div>
-            <h4 className="text-white font-bold text-sm md:text-base mb-1 md:mb-2">ATS Score</h4>
-            <p className="text-[#666666] text-xs md:text-sm">Beat the bots</p>
+            <h4 className="text-white font-bold text-xs md:text-base">ATS Score</h4>
           </div>
 
-          <div className="bg-[#0F0F0F] border border-[#2A2A2A] rounded-lg md:rounded-xl p-4 md:p-6 text-center">
-            <div className="w-10 h-10 md:w-12 md:h-12 bg-[#FF3B30]/10 rounded-lg flex items-center justify-center mx-auto mb-3 md:mb-4">
-              <Download className="w-5 h-5 md:w-6 md:h-6 text-[#FF3B30]" />
+          <div className="bg-[#0F0F0F] border border-[#2A2A2A] rounded-lg p-3 md:p-6 text-center">
+            <div className="w-8 h-8 md:w-12 md:h-12 bg-[#FF3B30]/10 rounded-lg flex items-center justify-center mx-auto mb-2 md:mb-4">
+              <Download className="w-4 h-4 md:w-6 md:h-6 text-[#FF3B30]" />
             </div>
-            <h4 className="text-white font-bold text-sm md:text-base mb-1 md:mb-2">All Formats</h4>
-            <p className="text-[#666666] text-xs md:text-sm">PDF, DOCX, TXT</p>
+            <h4 className="text-white font-bold text-xs md:text-base">All Formats</h4>
           </div>
         </div>
 
-        {/* What's Included */}
-        <div className="bg-[#0F0F0F] border border-[#2A2A2A] rounded-lg md:rounded-xl p-4 md:p-6 mb-6 md:mb-8">
-          <h4 className="text-white font-bold text-base md:text-lg mb-3 md:mb-4">What's Included:</h4>
-          <div className="grid sm:grid-cols-2 gap-2 md:gap-3 text-sm md:text-base">
+        {/* What's Included - Hidden on mobile, shown on md+ */}
+        <div className="hidden md:block bg-[#0F0F0F] border border-[#2A2A2A] rounded-xl p-6 mb-8">
+          <h4 className="text-white font-bold text-lg mb-4">What's Included:</h4>
+          <div className="grid sm:grid-cols-2 gap-3 text-base">
             {[
               'Professional AI rewrite',
               '3 resume templates',
@@ -157,7 +183,7 @@ export default function RoastDisplay({ roast }: RoastDisplayProps) {
               'Industry-specific tips',
             ].map((item, i) => (
               <div key={i} className="flex items-center gap-2">
-                <div className="w-4 h-4 rounded-full bg-[#FF3B30] flex items-center justify-center flex-shrink-0">
+                <div className="w-4 h-4 rounded-full bg-[#FF3B30] flex items-center justify-center shrink-0">
                   <Check className="w-2.5 h-2.5 text-white" />
                 </div>
                 <span className="text-[#A1A1A1]">{item}</span>
@@ -166,26 +192,21 @@ export default function RoastDisplay({ roast }: RoastDisplayProps) {
           </div>
         </div>
 
-        {/* Pricing */}
-        <div className="bg-[#0F0F0F] border border-[#2A2A2A] rounded-lg md:rounded-xl p-4 md:p-6 text-center mb-4 md:mb-6">
-          <div className="text-4xl md:text-5xl font-black text-white mb-1 md:mb-2">
+        {/* Pricing - Compact on mobile */}
+        <div className="bg-[#0F0F0F] border border-[#2A2A2A] rounded-lg md:rounded-xl p-3 md:p-6 text-center mb-3 md:mb-6">
+          <div className="text-3xl md:text-5xl font-black text-white mb-0.5 md:mb-2">
             $9.99
           </div>
-          <div className="text-[#A1A1A1] font-medium text-sm md:text-base">One-time payment • Instant delivery</div>
-          <div className="text-[#666666] text-xs md:text-sm mt-2">Worth $30/month elsewhere</div>
+          <div className="text-[#A1A1A1] font-medium text-xs md:text-base">One-time payment • Instant delivery</div>
         </div>
 
         {/* CTA Button */}
         <button
           disabled
-          className="w-full bg-[#2A2A2A] text-[#666666] px-6 py-3 md:py-4 rounded-lg md:rounded-xl font-semibold text-sm md:text-base"
+          className="w-full bg-[#2A2A2A] text-[#666666] px-4 md:px-6 py-2.5 md:py-4 rounded-lg md:rounded-xl font-semibold text-xs md:text-base"
         >
           Payment Integration Coming Soon
         </button>
-        
-        <p className="text-[#666666] text-xs md:text-sm mt-4 text-center">
-          We're integrating Stripe payments. Check back soon!
-        </p>
       </div>
     </div>
   );
